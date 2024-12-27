@@ -1,68 +1,65 @@
 #include <iostream>
 #include <vector>
-#include <cstdlib>
-#include <ctime>
 
 using namespace std;
 
-const int SIZE = 16;  // Spielfeldgröße
-const int MINES = 99; // Anzahl der Minen
+class ChainReaction {
+private:
+    vector<vector<int> > board;
+    int rows, cols;
 
-void placeMines(vector<vector<int> >& field) { // Leerzeichen zwischen >
-    srand(time(0));
-    int placedMines = 0;
-    while (placedMines < MINES) {
-        int row = rand() % SIZE;
-        int col = rand() % SIZE;
-        if (field[row][col] == -1) continue; // Mine schon da
-        field[row][col] = -1; // Mine platzieren
-        placedMines++;
-    }
-}
+public:
+    ChainReaction(int r, int c) : rows(r), cols(c), board(r, vector<int>(c, 0)) {}
 
-
-void calculateNumbers(vector<vector<int> >& field) { // Leerzeichen zwischen >
-    const int dx[] = {-1, -1, -1, 0, 0, 1, 1, 1};
-    const int dy[] = {-1, 0, 1, -1, 1, -1, 0, 1};
-
-    for (int row = 0; row < SIZE; row++) {
-        for (int col = 0; col < SIZE; col++) {
-            if (field[row][col] == -1) continue; // Feld ist eine Mine
-            int mineCount = 0;
-            for (int i = 0; i < 8; i++) {
-                int newRow = row + dx[i];
-                int newCol = col + dy[i];
-                if (newRow >= 0 && newRow < SIZE && newCol >= 0 && newCol < SIZE && field[newRow][newCol] == -1) {
-                    mineCount++;
-                }
-            }
-            field[row][col] = mineCount; // Anzahl der Minen setzen
+    void addBall(int x, int y) {
+        if (x < 0 || x >= rows || y < 0 || y >= cols) {
+            cout << "Invalid move!" << endl;
+            return;
         }
-    }
-}
-
-void printField(const vector<vector<int> >& field) { // Leerzeichen zwischen >
-    for (int row = 0; row < SIZE; row++) {
-        for (int col = 0; col < SIZE; col++) {
-            if (field[row][col] == -1) {
-                cout << "* ";
-            } else {
-                cout << field[row][col] << " ";
-            }
+        board[x][y]++;
+        if (board[x][y] > 4) {
+            explode(x, y);
         }
-        cout << endl;
+        printBoard();
     }
-}
+
+    void explode(int x, int y) {
+        board[x][y] = 0;
+        if (x > 0) board[x-1][y]++;
+        if (x < rows-1) board[x+1][y]++;
+        if (y > 0) board[x][y-1]++;
+        if (y < cols-1) board[x][y+1]++;
+
+        // Recursive explosions
+        if (x > 0 && board[x-1][y] > 4) explode(x-1, y);
+        if (x < rows-1 && board[x+1][y] > 4) explode(x+1, y);
+        if (y > 0 && board[x][y-1] > 4) explode(x, y-1);
+        if (y < cols-1 && board[x][y+1] > 4) explode(x, y+1);
+    }
+
+    void printBoard() {
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                cout << board[i][j] << " ";
+            }
+            cout << "\n";
+        }
+        cout << "\n";
+    }
+};
 
 int main() {
-    vector<vector<int> > field(SIZE, vector<int>(SIZE, 0)); // Leerzeichen zwischen >
+    ChainReaction game(5, 5); // 5x5 board
+    game.addBall(2, 2);
+    game.addBall(2, 2);
+    game.addBall(2, 2);
+    game.addBall(2, 2);
+    game.addBall(2, 2); // This should cause an explosion
 
-    // Minen platzieren und Zahlen berechnen
-    placeMines(field);
-    calculateNumbers(field);
-
-    // Ergebnis ausgeben
-    printField(field);
-
+    game.addBall(3, 2);
+    game.addBall(3, 2);
+    game.addBall(3, 2);
+    game.addBall(3, 2);
+    game.addBall(3, 2); // This should cause an explosion
     return 0;
 }
